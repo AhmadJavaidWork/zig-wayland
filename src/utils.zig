@@ -1,7 +1,7 @@
 const std = @import("std");
 const net = std.Io.net;
 
-pub fn get_display(allocator: std.mem.Allocator, init: std.process.Init) ![]u8 {
+pub fn getDisplay(allocator: std.mem.Allocator, init: std.process.Init) ![]u8 {
     const args = try init.minimal.args.toSlice(allocator);
     defer allocator.free(args);
 
@@ -14,7 +14,14 @@ pub fn get_display(allocator: std.mem.Allocator, init: std.process.Init) ![]u8 {
     }
 }
 
-pub fn setup_stream(io: std.Io, display: []const u8) !net.Stream {
+pub fn setupStream(io: std.Io, display: []const u8) !net.Stream {
     const address = try net.UnixAddress.init(display);
     return try address.connect(io);
+}
+
+pub fn takeString(bytes: []u8, length: u32, offset: *u32) []u8 {
+    const s: []u8 = bytes[length .. offset.* + length];
+    const pad = std.mem.alignForward(u32, length, @sizeOf(u32));
+    offset.* += pad;
+    return s;
 }
