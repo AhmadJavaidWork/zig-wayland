@@ -1,0 +1,20 @@
+const std = @import("std");
+const net = std.Io.net;
+
+pub fn get_display(allocator: std.mem.Allocator, init: std.process.Init) ![]u8 {
+    const args = try init.minimal.args.toSlice(allocator);
+    defer allocator.free(args);
+
+    if (args.len == 1) {
+        const dir = init.environ_map.get("XDG_RUNTIME_DIR") orelse return error.NoXdgRuntimeDir;
+        const display = init.environ_map.get("WAYLAND_DISPLAY") orelse return error.NoDisplay;
+        return try std.fmt.allocPrint(allocator, "{s}/{s}", .{ dir, display });
+    } else {
+        return try allocator.dupe(u8, args[1]);
+    }
+}
+
+pub fn setup_stream(io: std.Io, display: []const u8) !net.Stream {
+    const address = try net.UnixAddress.init(display);
+    return try address.connect(io);
+}
