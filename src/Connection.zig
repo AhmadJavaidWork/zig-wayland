@@ -34,10 +34,13 @@ pub fn nextEvent(self: *Self, allocator: std.mem.Allocator) !client.common.Messa
             break :blk switch (event) {
                 .Error => try client.WlDisplay.handleError(allocator, ev),
                 .DeleteId => client.WlDisplay.handleDeleteId(ev),
-                else => common.handleUnknownEvent(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
             };
         },
-        else => common.handleUnknownEvent(ev),
+        else => blk: {
+            std.debug.print("unhandled interface: {any}\n", .{interface});
+            break :blk try common.handleUnknownEvent(allocator, ev);
+        },
     };
 
     return .{ .sender = header.id, .event = event };

@@ -46,14 +46,16 @@ pub fn main(init: std.process.Init) !void {
     while (true) {
         const msg = try conn.nextEvent(allocator);
         switch (msg.event) {
-            .wl_display_error => {
+            .wl_display_error => |ev| {
                 std.debug.print("received: {f}\n", .{msg.event});
+                allocator.free(ev.message);
             },
             .wl_delete_id => {
                 std.debug.print("received: {f}\n", .{msg.event});
             },
-            .unknown => {
+            .unknown => |ev| {
                 std.debug.print("received: {f}\n", .{msg.event});
+                allocator.free(ev.data);
             },
         }
     }

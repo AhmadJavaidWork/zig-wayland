@@ -41,6 +41,10 @@ pub const Event = union(enum) {
     }
 };
 
-pub fn handleUnknownEvent(ev: []u8) Event {
-    return Event{ .unknown = UnknownEvent{ .data = ev } };
+pub fn handleUnknownEvent(allocator: std.mem.Allocator, ev: []u8) !Event {
+    return Event{
+        .unknown = UnknownEvent{
+            .data = try allocator.dupe(u8, ev),
+        },
+    };
 }
