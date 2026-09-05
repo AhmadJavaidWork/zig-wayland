@@ -1,5 +1,6 @@
 const std = @import("std");
 const WlDisplay = @import("WlDisplay.zig");
+const WlRegistry = @import("WlRegistry.zig");
 
 pub const Interfaces = enum(u16) {
     _padding,
@@ -32,6 +33,8 @@ pub const Event = union(enum) {
     unknown: UnknownEvent,
     wl_display_error: WlDisplay.Error,
     wl_delete_id: WlDisplay.DeleteId,
+    global: WlRegistry.GlobalType,
+    global_remove: WlRegistry.GlobalRemove,
 
     pub fn format(self: *const Event, writer: *std.Io.Writer) !void {
         try writer.flush();

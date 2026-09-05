@@ -37,6 +37,14 @@ pub fn nextEvent(self: *Self, allocator: std.mem.Allocator) !client.common.Messa
                 else => try common.handleUnknownEvent(allocator, ev),
             };
         },
+        .WlRegistry => blk: {
+            const event: client.WlRegistry.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Global => try client.WlRegistry.handleGlobal(allocator, ev),
+                .GlobalRemove => client.WlRegistry.handleGlobalRemove(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
+        },
         else => blk: {
             std.debug.print("unhandled interface: {any}\n", .{interface});
             break :blk try common.handleUnknownEvent(allocator, ev);

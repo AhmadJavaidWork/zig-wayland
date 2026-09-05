@@ -22,6 +22,6 @@ pub fn setupStream(io: std.Io, display: []const u8) !net.Stream {
 pub fn takeString(bytes: []u8, length: u32, offset: *u32) []u8 {
     const s: []u8 = bytes[length .. offset.* + length];
     const pad = std.mem.alignForward(u32, length, @sizeOf(u32));
-    offset.* += pad;
+    offset.* += @intCast(pad);
     return s;
 }

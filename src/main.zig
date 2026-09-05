@@ -53,6 +53,12 @@ pub fn main(init: std.process.Init) !void {
             .wl_delete_id => {
                 std.debug.print("received: {f}\n", .{msg.event});
             },
+            .global => {
+                std.debug.print("received: {f}\n", .{msg.event});
+            },
+            .global_remove => {
+                std.debug.print("received: {f}\n", .{msg.event});
+            },
             .unknown => |ev| {
                 std.debug.print("received: {f}\n", .{msg.event});
                 allocator.free(ev.data);

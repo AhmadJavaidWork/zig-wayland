@@ -1,6 +1,7 @@
 const std = @import("std");
 const common = @import("common.zig");
 const Connection = @import("../Connection.zig");
+const utils = @import("../utils.zig");
 
 id: u32,
 
@@ -73,9 +74,7 @@ pub fn handleError(allocator: std.mem.Allocator, ev: []u8) !common.Event {
     const message_len = std.mem.readInt(u32, ev[offset .. offset + size_of_u32][0..size_of_u32], .little);
     offset += size_of_u32;
 
-    const message: []u8 = try allocator.dupe(u8, ev[offset .. offset + message_len]);
-    const pad = std.mem.alignForward(usize, message_len, 4);
-    offset += @intCast(pad);
+    const message: []u8 = try allocator.dupe(u8, utils.takeString(ev, message_len, &offset));
 
     return common.Event{
         .wl_display_error = Error{
