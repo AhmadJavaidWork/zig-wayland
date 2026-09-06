@@ -37,7 +37,7 @@ pub const DeleteId = struct {
     }
 };
 
-pub fn sync(self: *const Self, conn: *const Connection, args: SyncArgs) !void {
+pub fn sync(self: *const Self, conn: *const Connection, args: SyncArgs) !u32 {
     const header = common.Header{
         .id = self.id,
         .length = @sizeOf(common.Header) + @sizeOf(SyncArgs),
@@ -47,6 +47,8 @@ pub fn sync(self: *const Self, conn: *const Connection, args: SyncArgs) !void {
     try conn.writer.writeAll(std.mem.asBytes(&header));
     try conn.writer.writeAll(std.mem.asBytes(&args));
     try conn.writer.flush();
+
+    return args.new_id;
 }
 
 pub fn getRegistry(self: *const Self, conn: *const Connection, args: GetRegistryArgs) !u32 {

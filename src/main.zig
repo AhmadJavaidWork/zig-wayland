@@ -54,6 +54,9 @@ pub fn main(init: std.process.Init) !void {
             .global_remove => {
                 std.debug.print("received: {f}\n", .{msg.event});
             },
+            .callback => {
+                std.debug.print("received: {f}\n", .{msg.event});
+            },
             .unknown => |ev| {
                 std.debug.print("received: {f}\n", .{msg.event});
                 allocator.free(ev.data);
@@ -72,6 +75,15 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
         ),
     };
 
+    const callback = client.WlCallback{
+        .id = try conn.wl_display.?.sync(
+            conn,
+            .{
+                .new_id = try conn.allocateId(allocator, Interfaces.WlCallback),
+            },
+        ),
+    };
+
     while (true) {
         const header = try conn.reader.peekStructPointer(client.common.Header);
         const interface: Interfaces = conn.objects.items[header.id];
@@ -84,6 +96,22 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
                     },
                     .global_remove => {
                         std.debug.print("received: {f}\n", .{msg.event});
+                    },
+                    .unknown => |ev| {
+                        std.debug.print("received: {f}\n", .{msg.event});
+                        allocator.free(ev.data);
+                    },
+                    else => {
+                        break;
+                    },
+                }
+            },
+            .WlCallback => {
+                const msg = try conn.nextEvent(allocator);
+                switch (msg.event) {
+                    .callback => {
+                        std.debug.print("received: {f}\n", .{msg.event});
+                        if (msg.sender == callback.id) break;
                     },
                     .unknown => |ev| {
                         std.debug.print("received: {f}\n", .{msg.event});

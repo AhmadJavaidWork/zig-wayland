@@ -1,11 +1,13 @@
 const std = @import("std");
 const WlDisplay = @import("WlDisplay.zig");
 const WlRegistry = @import("WlRegistry.zig");
+const WlCallback = @import("WlCallback.zig");
 
 pub const Interfaces = enum(u16) {
     _padding,
     WlDisplay,
     WlRegistry,
+    WlCallback,
 };
 
 pub const Header = extern struct {
@@ -35,6 +37,7 @@ pub const Event = union(enum) {
     wl_delete_id: WlDisplay.DeleteId,
     global: WlRegistry.Global,
     global_remove: WlRegistry.GlobalRemove,
+    callback: WlCallback.Done,
 
     pub fn format(self: *const Event, writer: *std.Io.Writer) !void {
         try writer.flush();

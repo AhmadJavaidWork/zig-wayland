@@ -48,6 +48,13 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
                 else => try common.handleUnknownEvent(allocator, ev),
             };
         },
+        .WlCallback => blk: {
+            const event: client.WlCallback.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Done => client.WlCallback.handleDone(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
+        },
         else => blk: {
             std.debug.print("unhandled interface: {any}\n", .{interface});
             break :blk try common.handleUnknownEvent(allocator, ev);
