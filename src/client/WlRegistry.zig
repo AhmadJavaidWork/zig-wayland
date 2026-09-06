@@ -77,21 +77,36 @@ pub const Global = union(enum) {
     }
 };
 
-pub const BindArgs = extern struct {
-    name: u32,
-    id: u32,
-};
+pub const BindArgs = struct { global: Global, id: u32 };
 
-pub fn bind(self: *const Self, conn: *const Connection, args: BindArgs) !void {
+pub fn bind(self: *const Self, conn: *const Connection, args: BindArgs) !u32 {
+    const name = @tagName(args.global);
+    const name_length = name.len + 1;
+    const padded = std.mem.alignForward(usize, name_length, @sizeOf(u32));
+
+    const wire_name_length: u32 = @intCast(name_length);
+    const length: u16 = @intCast(@sizeOf(common.Header) + (4 * @sizeOf(u32)) + padded);
+
     const header = common.Header{
         .id = self.id,
         .opcode = @intFromEnum(Requests.Bind),
-        .length = @sizeOf(common.Header) + @sizeOf(BindArgs),
+        .length = length,
     };
 
     try conn.writer.writeAll(std.mem.asBytes(&header));
-    try conn.writer.writeAll(std.mem.asBytes(&args));
+    switch (args.global) {
+        inline else => |v| {
+            try conn.writer.writeAll(std.mem.asBytes(&v.name));
+            try conn.writer.writeAll(std.mem.asBytes(&wire_name_length));
+            try conn.writer.writeAll(name);
+            _ = try conn.writer.splatByte(0, padded - name_length);
+            try conn.writer.writeAll(std.mem.asBytes(&v.version));
+        },
+    }
+    try conn.writer.writeAll(std.mem.asBytes(&args.id));
     try conn.writer.flush();
+
+    return args.id;
 }
 
 pub fn handleGlobal(ev: []u8) !common.Event {

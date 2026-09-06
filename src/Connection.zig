@@ -9,6 +9,7 @@ writer: *Io.Writer,
 objects: std.ArrayList(client.common.Interfaces) = .empty,
 wl_display: ?client.WlDisplay = null,
 wl_registry: ?client.WlRegistry = null,
+wl_compositor: ?client.WlCompositor = null,
 
 const Self = @This();
 
@@ -54,6 +55,9 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
                 .Done => client.WlCallback.handleDone(ev),
                 else => try common.handleUnknownEvent(allocator, ev),
             };
+        },
+        .WlCompositor => blk: {
+            break :blk try common.handleUnknownEvent(allocator, ev);
         },
         else => blk: {
             std.debug.print("unhandled interface: {any}\n", .{interface});

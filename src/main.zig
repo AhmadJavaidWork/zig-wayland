@@ -70,7 +70,7 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
         .id = try conn.wl_display.?.getRegistry(
             conn,
             .{
-                .new_id = try conn.allocateId(allocator, Interfaces.WlRegistry),
+                .registry = try conn.allocateId(allocator, Interfaces.WlRegistry),
             },
         ),
     };
@@ -79,7 +79,7 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
         .id = try conn.wl_display.?.sync(
             conn,
             .{
-                .new_id = try conn.allocateId(allocator, Interfaces.WlCallback),
+                .callback = try conn.allocateId(allocator, Interfaces.WlCallback),
             },
         ),
     };
@@ -91,8 +91,22 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
             .WlRegistry => {
                 const msg = try conn.nextEvent(allocator);
                 switch (msg.event) {
-                    .global => {
+                    .global => |g| {
                         std.debug.print("received: {f}\n", .{msg.event});
+                        switch (g) {
+                            .wl_compositor => {
+                                conn.wl_compositor = client.WlCompositor{
+                                    .id = try conn.wl_registry.?.bind(
+                                        conn,
+                                        .{
+                                            .global = g,
+                                            .id = try conn.allocateId(allocator, Interfaces.WlCompositor),
+                                        },
+                                    ),
+                                };
+                            },
+                            else => {},
+                        }
                     },
                     .global_remove => {
                         std.debug.print("received: {f}\n", .{msg.event});

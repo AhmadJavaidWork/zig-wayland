@@ -10,8 +10,8 @@ const Self = @This();
 const Requests = enum(u8) { Sync, GetRegistry };
 pub const Events = enum(u8) { Error, DeleteId, _ };
 
-pub const SyncArgs = extern struct { new_id: u32 };
-pub const GetRegistryArgs = extern struct { new_id: u32 };
+pub const SyncArgs = extern struct { callback: u32 };
+pub const GetRegistryArgs = extern struct { registry: u32 };
 
 pub const Error = struct {
     object_id: u32,
@@ -48,7 +48,7 @@ pub fn sync(self: *const Self, conn: *const Connection, args: SyncArgs) !u32 {
     try conn.writer.writeAll(std.mem.asBytes(&args));
     try conn.writer.flush();
 
-    return args.new_id;
+    return args.callback;
 }
 
 pub fn getRegistry(self: *const Self, conn: *const Connection, args: GetRegistryArgs) !u32 {
@@ -62,7 +62,7 @@ pub fn getRegistry(self: *const Self, conn: *const Connection, args: GetRegistry
     try conn.writer.writeAll(std.mem.asBytes(&args));
     try conn.writer.flush();
 
-    return args.new_id;
+    return args.registry;
 }
 
 pub fn handleError(allocator: std.mem.Allocator, ev: []u8) !common.Event {

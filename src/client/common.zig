@@ -8,6 +8,7 @@ pub const Interfaces = enum(u16) {
     WlDisplay,
     WlRegistry,
     WlCallback,
+    WlCompositor,
 };
 
 pub const Header = extern struct {
