@@ -99,7 +99,7 @@ pub fn bind(self: *const Self, conn: *const Connection, args: BindArgs) !u32 {
             try conn.writer.writeAll(std.mem.asBytes(&v.name));
             try conn.writer.writeAll(std.mem.asBytes(&wire_name_length));
             try conn.writer.writeAll(name);
-            _ = try conn.writer.splatByte(0, padded - name_length);
+            _ = try conn.writer.splatByte(0, padded - name.len);
             try conn.writer.writeAll(std.mem.asBytes(&v.version));
         },
     }

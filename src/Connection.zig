@@ -10,6 +10,7 @@ objects: std.ArrayList(client.common.Interfaces) = .empty,
 wl_display: ?client.WlDisplay = null,
 wl_registry: ?client.WlRegistry = null,
 wl_compositor: ?client.WlCompositor = null,
+wl_shm: ?client.WlShm = null,
 
 const Self = @This();
 
@@ -58,6 +59,13 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
         },
         .WlCompositor => blk: {
             break :blk try common.handleUnknownEvent(allocator, ev);
+        },
+        .WlShm => blk: {
+            const event: client.WlShm.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Format => client.WlShm.handleFormat(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
         },
         else => blk: {
             std.debug.print("unhandled interface: {any}\n", .{interface});
