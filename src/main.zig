@@ -60,6 +60,10 @@ pub fn main(init: std.process.Init) !void {
             .wl_shm_format => {
                 std.debug.print("received: {f}\n", .{msg.event});
             },
+            .ping => |p| {
+                std.debug.print("received: {f}\n", .{p});
+                try conn.xdg_wm_base.?.pong(&conn, .{ .serial = p.serial });
+            },
             .unknown => |ev| {
                 std.debug.print("received: {f}\n", .{msg.event});
                 allocator.free(ev.data);
@@ -104,6 +108,17 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
                                         .{
                                             .global = g,
                                             .id = try conn.allocateId(allocator, Interfaces.WlCompositor),
+                                        },
+                                    ),
+                                };
+                            },
+                            .xdg_wm_base => {
+                                conn.xdg_wm_base = client.XdgWmBase{
+                                    .id = try conn.wl_registry.?.bind(
+                                        conn,
+                                        .{
+                                            .global = g,
+                                            .id = try conn.allocateId(allocator, Interfaces.XdgWmBase),
                                         },
                                     ),
                                 };

@@ -11,6 +11,7 @@ wl_display: ?client.WlDisplay = null,
 wl_registry: ?client.WlRegistry = null,
 wl_compositor: ?client.WlCompositor = null,
 wl_shm: ?client.WlShm = null,
+xdg_wm_base: ?client.XdgWmBase = null,
 
 const Self = @This();
 
@@ -64,6 +65,13 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
             const event: client.WlShm.Events = @enumFromInt(header.opcode);
             break :blk switch (event) {
                 .Format => client.WlShm.handleFormat(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
+        },
+        .XdgWmBase => blk: {
+            const event: client.XdgWmBase.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Ping => client.XdgWmBase.handlePing(ev),
                 else => try common.handleUnknownEvent(allocator, ev),
             };
         },
