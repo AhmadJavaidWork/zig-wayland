@@ -4,7 +4,6 @@ const common = @import("common.zig");
 const utils = @import("../utils.zig");
 
 id: u32,
-globals: std.ArrayList(Global) = .empty,
 
 const Self = @This();
 
@@ -13,15 +12,7 @@ pub const Events = enum(u8) { Global, GlobalRemove, _ };
 
 pub const GlobalType = struct {
     name: u32,
-    interface: []u8,
     version: u32,
-
-    pub fn format(self: *const GlobalType, writer: *std.Io.Writer) !void {
-        try writer.print(
-            "wl_registry_global_event: {{ name: {d}, interface: {s}, version: {d} }}",
-            .{ self.name, self.interface, self.version },
-        );
-    }
 };
 
 pub const GlobalRemove = struct {
@@ -32,7 +23,59 @@ pub const GlobalRemove = struct {
     }
 };
 
-pub const Global = union(enum) {};
+pub const Global = union(enum) {
+    wl_compositor: GlobalType,
+    wl_subcompositor: GlobalType,
+    wp_viewporter: GlobalType,
+    zxdg_output_manager_v1: GlobalType,
+    wp_presentation: GlobalType,
+    wp_single_pixel_buffer_manager_v1: GlobalType,
+    wp_tearing_control_manager_v1: GlobalType,
+    zwp_relative_pointer_manager_v1: GlobalType,
+    zwp_pointer_constraints_v1: GlobalType,
+    zwp_input_timestamps_manager_v1: GlobalType,
+    weston_capture_v1: GlobalType,
+    wl_data_device_manager: GlobalType,
+    wl_shm: GlobalType,
+    wl_eglstream_display: GlobalType,
+    wl_drm: GlobalType,
+    zwp_linux_dmabuf_v1: GlobalType,
+    wl_seat: GlobalType,
+    wl_output: GlobalType,
+    zwp_input_panel_v1: GlobalType,
+    zwp_input_method_v1: GlobalType,
+    zwp_text_input_manager_v1: GlobalType,
+    xdg_wm_base: GlobalType,
+    weston_desktop_shell: GlobalType,
+    zwp_primary_selection_device_manager_v1: GlobalType,
+    gtk_shell1: GlobalType,
+    wp_fractional_scale_manager_v1: GlobalType,
+    zwp_pointer_gestures_v1: GlobalType,
+    zwp_tablet_manager_v2: GlobalType,
+    zxdg_exporter_v2: GlobalType,
+    zxdg_importer_v2: GlobalType,
+    zxdg_exporter_v1: GlobalType,
+    zxdg_importer_v1: GlobalType,
+    zwp_keyboard_shortcuts_inhibit_manager_v1: GlobalType,
+    zwp_text_input_manager_v3: GlobalType,
+    xdg_activation_v1: GlobalType,
+    zwp_idle_inhibit_manager_v1: GlobalType,
+    unknown_global: GlobalType,
+
+    pub fn format(self: Global, writer: *std.Io.Writer) !void {
+        try writer.flush();
+        switch (self) {
+            inline else => |g, tag| {
+                const interface = @tagName(tag);
+                try writer.print("wl_registry_global_event: {{ name: {d}, interface: {s}, version: {d} }}", .{
+                    g.name,
+                    interface,
+                    g.version,
+                });
+            },
+        }
+    }
+};
 
 pub const BindArgs = extern struct {
     name: u32,
@@ -51,7 +94,7 @@ pub fn bind(self: *const Self, conn: *const Connection, args: BindArgs) !void {
     try conn.writer.flush();
 }
 
-pub fn handleGlobal(allocator: std.mem.Allocator, ev: []u8) !common.Event {
+pub fn handleGlobal(ev: []u8) !common.Event {
     var offset: u32 = 0;
     const size_of_u32 = @sizeOf(u32);
 
@@ -59,17 +102,20 @@ pub fn handleGlobal(allocator: std.mem.Allocator, ev: []u8) !common.Event {
     offset += size_of_u32;
 
     const interface_len: u32 = std.mem.readInt(u32, ev[offset .. offset + size_of_u32][0..size_of_u32], .little);
-    const interface: []u8 = try allocator.dupe(u8, utils.takeString(ev, interface_len, &offset));
+    offset += size_of_u32;
 
+    const interface: []u8 = utils.takeString(ev, interface_len - 1, &offset);
     const version: u32 = std.mem.readInt(u32, ev[offset .. offset + size_of_u32][0..size_of_u32], .little);
 
-    return common.Event{
-        .global = GlobalType{
+    const global = utils.nameToGlobal(
+        interface,
+        GlobalType{
             .name = name,
-            .interface = interface,
             .version = version,
         },
-    };
+    );
+
+    return common.Event{ .global = global };
 }
 
 pub fn handleGlobalRemove(ev: []u8) common.Event {

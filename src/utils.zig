@@ -1,4 +1,6 @@
 const std = @import("std");
+const WlRegistry = @import("client/WlRegistry.zig");
+
 const net = std.Io.net;
 
 pub fn getDisplay(allocator: std.mem.Allocator, init: std.process.Init) ![]u8 {
@@ -20,8 +22,18 @@ pub fn setupStream(io: std.Io, display: []const u8) !net.Stream {
 }
 
 pub fn takeString(bytes: []u8, length: u32, offset: *u32) []u8 {
-    const s: []u8 = bytes[length .. offset.* + length];
+    const s: []u8 = bytes[offset.* .. offset.* + length];
     const pad = std.mem.alignForward(u32, length, @sizeOf(u32));
     offset.* += @intCast(pad);
     return s;
+}
+
+pub fn nameToGlobal(name: []const u8, value: WlRegistry.GlobalType) WlRegistry.Global {
+    inline for (@typeInfo(WlRegistry.Global).@"union".fields) |f| {
+        if (std.mem.eql(u8, name, f.name)) {
+            return @unionInit(WlRegistry.Global, f.name, value);
+        }
+    }
+
+    return WlRegistry.Global{ .unknown_global = value };
 }

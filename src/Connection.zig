@@ -40,7 +40,7 @@ pub fn nextEvent(self: *Self, allocator: std.mem.Allocator) !client.common.Messa
         .WlRegistry => blk: {
             const event: client.WlRegistry.Events = @enumFromInt(header.opcode);
             break :blk switch (event) {
-                .Global => try client.WlRegistry.handleGlobal(allocator, ev),
+                .Global => try client.WlRegistry.handleGlobal(ev),
                 .GlobalRemove => client.WlRegistry.handleGlobalRemove(ev),
                 else => try common.handleUnknownEvent(allocator, ev),
             };
