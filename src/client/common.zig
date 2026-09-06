@@ -5,6 +5,7 @@ const WlCallback = @import("WlCallback.zig");
 const WlShm = @import("WlShm.zig");
 const XdgWmBase = @import("XdgWmBase.zig");
 const WlSurface = @import("WlSurface.zig");
+const XdgSurface = @import("XdgSurface.zig");
 
 pub const Interfaces = enum(u16) {
     _padding,
@@ -15,6 +16,7 @@ pub const Interfaces = enum(u16) {
     WlShm,
     XdgWmBase,
     WlSurface,
+    XdgSurface,
 };
 
 pub const Header = extern struct {
@@ -51,6 +53,7 @@ pub const Event = union(enum) {
     leave: WlSurface.Leave,
     preferred_buffer_scale: WlSurface.PreferredBufferScale,
     preferred_buffer_transform: WlSurface.PreferredBufferTransform,
+    configure: XdgSurface.Configure,
 
     pub fn format(self: *const Event, writer: *std.Io.Writer) !void {
         try writer.flush();

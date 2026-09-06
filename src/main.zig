@@ -49,6 +49,16 @@ pub fn main(init: std.process.Init) !void {
         ),
     };
 
+    conn.xdg_surface = client.XdgSurface{
+        .id = try conn.xdg_wm_base.?.getXdgSurface(
+            &conn,
+            .{
+                .id = try conn.allocateId(allocator, Interfaces.XdgSurface),
+                .surface = conn.wl_surface.?.id,
+            },
+        ),
+    };
+
     listener_thread_id.join();
 }
 
@@ -189,6 +199,9 @@ pub fn eventListener(allocator: std.mem.Allocator, conn: *Connection) !void {
                 print("received: {f}\n", .{msg.event});
             },
             .preferred_buffer_transform => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .configure => {
                 print("received: {f}\n", .{msg.event});
             },
             .unknown => |ev| {

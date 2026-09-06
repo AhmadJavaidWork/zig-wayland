@@ -13,6 +13,7 @@ wl_compositor: ?client.WlCompositor = null,
 wl_shm: ?client.WlShm = null,
 xdg_wm_base: ?client.XdgWmBase = null,
 wl_surface: ?client.WlSurface = null,
+xdg_surface: ?client.XdgSurface = null,
 
 const Self = @This();
 
@@ -83,6 +84,13 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
                 .Leave => client.WlSurface.handleLeave(ev),
                 .PreferredBufferScale => client.WlSurface.handlePreferredBufferScale(ev),
                 .PreferredBufferTransform => client.WlSurface.handlePreferredBufferTransform(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
+        },
+        .XdgSurface => blk: {
+            const event: client.XdgSurface.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Configure => client.XdgSurface.handleConfigure(ev),
                 else => try common.handleUnknownEvent(allocator, ev),
             };
         },
