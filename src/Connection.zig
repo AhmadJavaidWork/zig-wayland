@@ -12,6 +12,7 @@ wl_registry: ?client.WlRegistry = null,
 wl_compositor: ?client.WlCompositor = null,
 wl_shm: ?client.WlShm = null,
 xdg_wm_base: ?client.XdgWmBase = null,
+wl_surface: ?client.WlSurface = null,
 
 const Self = @This();
 
@@ -72,6 +73,16 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
             const event: client.XdgWmBase.Events = @enumFromInt(header.opcode);
             break :blk switch (event) {
                 .Ping => client.XdgWmBase.handlePing(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
+        },
+        .WlSurface => blk: {
+            const event: client.WlSurface.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Enter => client.WlSurface.handleEnter(ev),
+                .Leave => client.WlSurface.handleLeave(ev),
+                .PreferredBufferScale => client.WlSurface.handlePreferredBufferScale(ev),
+                .PreferredBufferTransform => client.WlSurface.handlePreferredBufferTransform(ev),
                 else => try common.handleUnknownEvent(allocator, ev),
             };
         },

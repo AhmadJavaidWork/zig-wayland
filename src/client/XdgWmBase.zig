@@ -13,14 +13,6 @@ pub const CreatePositionerArgs = extern struct { id: u32 };
 pub const GetXdgSurfaceArgs = extern struct { id: u32, surface: u32 };
 pub const PongArgs = extern struct { serial: u32 };
 
-pub const Ping = struct {
-    serial: u32,
-
-    pub fn format(self: *const Ping, writer: *std.Io.Writer) !void {
-        try writer.print("xdg_wm_base_event: {{ serial: {d} }}", .{self.serial});
-    }
-};
-
 pub fn destroy(self: *const Self, conn: *const Connection) !void {
     const header = common.Header{
         .id = self.id,
@@ -72,6 +64,13 @@ pub fn pong(self: *const Self, conn: *const Connection, args: PongArgs) !void {
     try conn.writer.flush();
 }
 
+pub const Ping = struct {
+    serial: u32,
+
+    pub fn format(self: *const Ping, writer: *std.Io.Writer) !void {
+        try writer.print("xdg_wm_base_event: {{ serial: {d} }}", .{self.serial});
+    }
+};
 pub fn handlePing(ev: []u8) common.Event {
     return common.Event{
         .ping = Ping{

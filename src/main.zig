@@ -38,38 +38,18 @@ pub fn main(init: std.process.Init) !void {
 
     try setupRegistry(allocator, &conn);
 
-    while (true) {
-        const msg = try conn.nextEvent(allocator);
-        switch (msg.event) {
-            .wl_display_error => |ev| {
-                std.debug.print("received: {f}\n", .{msg.event});
-                allocator.free(ev.message);
+    const listener_thread_id = try std.Thread.spawn(.{}, eventListener, .{ allocator, &conn });
+
+    conn.wl_surface = client.WlSurface{
+        .id = try conn.wl_compositor.?.create_surface(
+            &conn,
+            .{
+                .id = try conn.allocateId(allocator, Interfaces.WlSurface),
             },
-            .wl_delete_id => {
-                std.debug.print("received: {f}\n", .{msg.event});
-            },
-            .global => {
-                std.debug.print("received: {f}\n", .{msg.event});
-            },
-            .global_remove => {
-                std.debug.print("received: {f}\n", .{msg.event});
-            },
-            .callback => {
-                std.debug.print("received: {f}\n", .{msg.event});
-            },
-            .wl_shm_format => {
-                std.debug.print("received: {f}\n", .{msg.event});
-            },
-            .ping => |p| {
-                std.debug.print("received: {f}\n", .{p});
-                try conn.xdg_wm_base.?.pong(&conn, .{ .serial = p.serial });
-            },
-            .unknown => |ev| {
-                std.debug.print("received: {f}\n", .{msg.event});
-                allocator.free(ev.data);
-            },
-        }
-    }
+        ),
+    };
+
+    listener_thread_id.join();
 }
 
 pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
@@ -99,7 +79,7 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
                 const msg = try conn.nextEvent(allocator);
                 switch (msg.event) {
                     .global => |g| {
-                        std.debug.print("received: {f}\n", .{msg.event});
+                        print("received: {f}\n", .{msg.event});
                         switch (g) {
                             .wl_compositor => {
                                 conn.wl_compositor = client.WlCompositor{
@@ -138,10 +118,10 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
                         }
                     },
                     .global_remove => {
-                        std.debug.print("received: {f}\n", .{msg.event});
+                        print("received: {f}\n", .{msg.event});
                     },
                     .unknown => |ev| {
-                        std.debug.print("received: {f}\n", .{msg.event});
+                        print("received: {f}\n", .{msg.event});
                         allocator.free(ev.data);
                     },
                     else => {
@@ -153,11 +133,11 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
                 const msg = try conn.nextEvent(allocator);
                 switch (msg.event) {
                     .callback => {
-                        std.debug.print("received: {f}\n", .{msg.event});
+                        print("received: {f}\n", .{msg.event});
                         if (msg.sender == callback.id) break;
                     },
                     .unknown => |ev| {
-                        std.debug.print("received: {f}\n", .{msg.event});
+                        print("received: {f}\n", .{msg.event});
                         allocator.free(ev.data);
                     },
                     else => {
@@ -167,6 +147,53 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
             },
             else => {
                 break;
+            },
+        }
+    }
+}
+
+pub fn eventListener(allocator: std.mem.Allocator, conn: *Connection) !void {
+    while (true) {
+        const msg = try conn.nextEvent(allocator);
+        switch (msg.event) {
+            .wl_display_error => |ev| {
+                print("received: {f}\n", .{msg.event});
+                allocator.free(ev.message);
+            },
+            .wl_delete_id => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .global => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .global_remove => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .callback => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .wl_shm_format => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .ping => |p| {
+                print("received: {f}\n", .{p});
+                try conn.xdg_wm_base.?.pong(conn, .{ .serial = p.serial });
+            },
+            .enter => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .leave => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .preferred_buffer_scale => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .preferred_buffer_transform => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .unknown => |ev| {
+                print("received: {f}\n", .{msg.event});
+                allocator.free(ev.data);
             },
         }
     }

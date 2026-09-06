@@ -10,19 +10,41 @@ const Self = @This();
 const Requests = enum(u8) { Bind };
 pub const Events = enum(u8) { Global, GlobalRemove, _ };
 
+pub const BindArgs = struct { global: Global, id: u32 };
+pub fn bind(self: *const Self, conn: *const Connection, args: BindArgs) !u32 {
+    const name = @tagName(args.global);
+    const name_length = name.len + 1;
+    const padded = std.mem.alignForward(usize, name_length, @sizeOf(u32));
+
+    const wire_name_length: u32 = @intCast(name_length);
+    const length: u16 = @intCast(@sizeOf(common.Header) + (4 * @sizeOf(u32)) + padded);
+
+    const header = common.Header{
+        .id = self.id,
+        .opcode = @intFromEnum(Requests.Bind),
+        .length = length,
+    };
+
+    try conn.writer.writeAll(std.mem.asBytes(&header));
+    switch (args.global) {
+        inline else => |v| {
+            try conn.writer.writeAll(std.mem.asBytes(&v.name));
+            try conn.writer.writeAll(std.mem.asBytes(&wire_name_length));
+            try conn.writer.writeAll(name);
+            _ = try conn.writer.splatByte(0, padded - name.len);
+            try conn.writer.writeAll(std.mem.asBytes(&v.version));
+        },
+    }
+    try conn.writer.writeAll(std.mem.asBytes(&args.id));
+    try conn.writer.flush();
+
+    return args.id;
+}
+
 pub const GlobalType = struct {
     name: u32,
     version: u32,
 };
-
-pub const GlobalRemove = struct {
-    id: u32,
-
-    pub fn format(self: *const GlobalRemove, writer: *std.Io.Writer) !void {
-        try writer.print("wl_registry_global_remove_event: {{ id: {d} }}", .{self.id});
-    }
-};
-
 pub const Global = union(enum) {
     wl_compositor: GlobalType,
     wl_subcompositor: GlobalType,
@@ -76,39 +98,6 @@ pub const Global = union(enum) {
         }
     }
 };
-
-pub const BindArgs = struct { global: Global, id: u32 };
-
-pub fn bind(self: *const Self, conn: *const Connection, args: BindArgs) !u32 {
-    const name = @tagName(args.global);
-    const name_length = name.len + 1;
-    const padded = std.mem.alignForward(usize, name_length, @sizeOf(u32));
-
-    const wire_name_length: u32 = @intCast(name_length);
-    const length: u16 = @intCast(@sizeOf(common.Header) + (4 * @sizeOf(u32)) + padded);
-
-    const header = common.Header{
-        .id = self.id,
-        .opcode = @intFromEnum(Requests.Bind),
-        .length = length,
-    };
-
-    try conn.writer.writeAll(std.mem.asBytes(&header));
-    switch (args.global) {
-        inline else => |v| {
-            try conn.writer.writeAll(std.mem.asBytes(&v.name));
-            try conn.writer.writeAll(std.mem.asBytes(&wire_name_length));
-            try conn.writer.writeAll(name);
-            _ = try conn.writer.splatByte(0, padded - name.len);
-            try conn.writer.writeAll(std.mem.asBytes(&v.version));
-        },
-    }
-    try conn.writer.writeAll(std.mem.asBytes(&args.id));
-    try conn.writer.flush();
-
-    return args.id;
-}
-
 pub fn handleGlobal(ev: []u8) !common.Event {
     var offset: u32 = 0;
     const size_of_u32 = @sizeOf(u32);
@@ -133,6 +122,13 @@ pub fn handleGlobal(ev: []u8) !common.Event {
     return common.Event{ .global = global };
 }
 
+pub const GlobalRemove = struct {
+    id: u32,
+
+    pub fn format(self: *const GlobalRemove, writer: *std.Io.Writer) !void {
+        try writer.print("wl_registry_global_remove_event: {{ id: {d} }}", .{self.id});
+    }
+};
 pub fn handleGlobalRemove(ev: []u8) common.Event {
     return common.Event{
         .global_remove = GlobalRemove{
