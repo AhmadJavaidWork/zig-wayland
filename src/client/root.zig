@@ -8,3 +8,4 @@ pub const WlShm = @import("WlShm.zig");
 pub const XdgWmBase = @import("XdgWmBase.zig");
 pub const WlSurface = @import("WlSurface.zig");
 pub const XdgSurface = @import("XdgSurface.zig");
+pub const XdgToplevel = @import("XdgToplevel.zig");

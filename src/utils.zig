@@ -28,12 +28,12 @@ pub fn takeString(bytes: []u8, length: u32, offset: *u32) []u8 {
     return s;
 }
 
-pub fn nameToGlobal(name: []const u8, value: WlRegistry.GlobalType) WlRegistry.Global {
-    inline for (@typeInfo(WlRegistry.Global).@"union".fields) |f| {
+pub fn nameToGlobal(name: []const u8, value: WlRegistry.Global) WlRegistry.GlobalEvent {
+    inline for (@typeInfo(WlRegistry.GlobalEvent).@"union".fields) |f| {
         if (std.mem.eql(u8, name, f.name)) {
-            return @unionInit(WlRegistry.Global, f.name, value);
+            return @unionInit(WlRegistry.GlobalEvent, f.name, value);
         }
     }
 
-    return WlRegistry.Global{ .unknown_global = value };
+    return WlRegistry.GlobalEvent{ .unknown_global = value };
 }

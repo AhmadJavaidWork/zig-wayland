@@ -193,61 +193,61 @@ pub fn getRelease(self: *const Self, conn: *const Connection, args: GetReleaseAr
     return args.callback;
 }
 
-pub const Enter = struct {
+pub const EnterEvent = struct {
     wl_output: u32,
 
-    pub fn format(self: *const Enter, writer: *std.Io.Writer) !void {
+    pub fn format(self: *const EnterEvent, writer: *std.Io.Writer) !void {
         try writer.print("wl_surface_enter_event: {{ wl_output: {d} }}", .{self.wl_output});
     }
 };
 pub fn handleEnter(ev: []u8) common.Event {
     return common.Event{
-        .enter = Enter{
+        .wl_surface_enter = EnterEvent{
             .wl_output = std.mem.readInt(u32, ev[0..@sizeOf(u32)], .little),
         },
     };
 }
 
-pub const Leave = struct {
+pub const LeaveEvent = struct {
     wl_output: u32,
 
-    pub fn format(self: *const Leave, writer: *std.Io.Writer) !void {
+    pub fn format(self: *const LeaveEvent, writer: *std.Io.Writer) !void {
         try writer.print("wl_surface_leave_event: {{ wl_output: {d} }}", .{self.wl_output});
     }
 };
 pub fn handleLeave(ev: []u8) common.Event {
     return common.Event{
-        .leave = Leave{
+        .wl_surface_leave = LeaveEvent{
             .wl_output = std.mem.readInt(u32, ev[0..@sizeOf(u32)], .little),
         },
     };
 }
 
-pub const PreferredBufferScale = struct {
+pub const PreferredBufferScaleEvent = struct {
     factor: u32,
 
-    pub fn format(self: *const PreferredBufferScale, writer: *std.Io.Writer) !void {
+    pub fn format(self: *const PreferredBufferScaleEvent, writer: *std.Io.Writer) !void {
         try writer.print("wl_surface_preferred_buffer_scale_event: {{ factor: {d} }}", .{self.factor});
     }
 };
 pub fn handlePreferredBufferScale(ev: []u8) common.Event {
     return common.Event{
-        .preferred_buffer_scale = PreferredBufferScale{
+        .wl_surface_preferred_buffer_scale = PreferredBufferScaleEvent{
             .factor = std.mem.readInt(u32, ev[0..@sizeOf(u32)], .little),
         },
     };
 }
 
-pub const PreferredBufferTransform = struct {
+pub const PreferredBufferTransformEvent = struct {
     transform: WlOutput.Transform,
 
-    pub fn format(self: *const PreferredBufferTransform, writer: *std.Io.Writer) !void {
+    pub fn format(self: *const PreferredBufferTransformEvent, writer: *std.Io.Writer) !void {
         try writer.print("wl_surface_preferred_buffer_transform_event: {{ transform: {any} }}", .{self.transform});
     }
 };
 pub fn handlePreferredBufferTransform(ev: []u8) common.Event {
     return common.Event{
-        .preferred_buffer_transform = PreferredBufferTransform{
+        .wl_surface_preferred_buffer_transform = PreferredBufferTransformEvent{
             .transform = @enumFromInt(std.mem.readInt(u32, ev[0..@sizeOf(u32)], .little)),
         },
     };

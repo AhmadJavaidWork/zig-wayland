@@ -14,16 +14,16 @@ pub const CreatePoolArgs = extern struct { id: u32, fd: std.os.linux.fd_t, size:
 
 // pub fn release(self: *const Self, conn: *const Connection) !void {}
 
-pub const Format = struct {
+pub const FormatEvent = struct {
     format_data: u32,
 
-    pub fn format(self: *const Format, writer: *std.Io.Writer) !void {
+    pub fn format(self: *const FormatEvent, writer: *std.Io.Writer) !void {
         try writer.print("wl_shm_format_event: {{ format: 0x{x} }}", .{self.format_data});
     }
 };
 pub fn handleFormat(ev: []u8) common.Event {
     return common.Event{
-        .wl_shm_format = Format{
+        .wl_shm_format = FormatEvent{
             .format_data = std.mem.readInt(u32, ev[0..@sizeOf(u32)], .little),
         },
     };

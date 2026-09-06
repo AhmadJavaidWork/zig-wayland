@@ -59,6 +59,33 @@ pub fn main(init: std.process.Init) !void {
         ),
     };
 
+    conn.xdg_toplevel = client.XdgToplevel{
+        .id = try conn.xdg_surface.?.getToplevel(
+            &conn,
+            .{
+                .id = try conn.allocateId(allocator, Interfaces.XdgToplevel),
+            },
+        ),
+    };
+
+    const title: []const u8 = "Hello World in Wayland";
+    const app_id: []const u8 = "Hello World in Wayland";
+
+    try conn.xdg_toplevel.?.setTitle(
+        &conn,
+        .{
+            .title = title[0..],
+        },
+    );
+    try conn.xdg_toplevel.?.setAppId(
+        &conn,
+        .{
+            .app_id = app_id[0..],
+        },
+    );
+
+    try conn.wl_surface.?.commit(&conn);
+
     listener_thread_id.join();
 }
 
@@ -88,7 +115,7 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
             .WlRegistry => {
                 const msg = try conn.nextEvent(allocator);
                 switch (msg.event) {
-                    .global => |g| {
+                    .wl_registry_global => |g| {
                         print("received: {f}\n", .{msg.event});
                         switch (g) {
                             .wl_compositor => {
@@ -127,7 +154,7 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
                             else => {},
                         }
                     },
-                    .global_remove => {
+                    .wl_registry_global_remove => {
                         print("received: {f}\n", .{msg.event});
                     },
                     .unknown => |ev| {
@@ -142,7 +169,7 @@ pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
             .WlCallback => {
                 const msg = try conn.nextEvent(allocator);
                 switch (msg.event) {
-                    .callback => {
+                    .wl_callback_done => {
                         print("received: {f}\n", .{msg.event});
                         if (msg.sender == callback.id) break;
                     },
@@ -170,39 +197,52 @@ pub fn eventListener(allocator: std.mem.Allocator, conn: *Connection) !void {
                 print("received: {f}\n", .{msg.event});
                 allocator.free(ev.message);
             },
-            .wl_delete_id => {
+            .wl_display_delete_id => {
                 print("received: {f}\n", .{msg.event});
             },
-            .global => {
+            .wl_registry_global => {
                 print("received: {f}\n", .{msg.event});
             },
-            .global_remove => {
+            .wl_registry_global_remove => {
                 print("received: {f}\n", .{msg.event});
             },
-            .callback => {
+            .wl_callback_done => {
                 print("received: {f}\n", .{msg.event});
             },
             .wl_shm_format => {
                 print("received: {f}\n", .{msg.event});
             },
-            .ping => |p| {
+            .xdg_wm_base_ping => |p| {
                 print("received: {f}\n", .{p});
                 try conn.xdg_wm_base.?.pong(conn, .{ .serial = p.serial });
             },
-            .enter => {
+            .wl_surface_enter => {
                 print("received: {f}\n", .{msg.event});
             },
-            .leave => {
+            .wl_surface_leave => {
                 print("received: {f}\n", .{msg.event});
             },
-            .preferred_buffer_scale => {
+            .wl_surface_preferred_buffer_scale => {
                 print("received: {f}\n", .{msg.event});
             },
-            .preferred_buffer_transform => {
+            .wl_surface_preferred_buffer_transform => {
                 print("received: {f}\n", .{msg.event});
             },
-            .configure => {
+            .xdg_surface_configure => {
                 print("received: {f}\n", .{msg.event});
+            },
+            .xdg_toplevel_configure => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .xdg_toplevel_close => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .xdg_toplevel_configure_bounds => {
+                print("received: {f}\n", .{msg.event});
+            },
+            .xdg_toplevel_wm_capabilities => |ev| {
+                print("received: {f}\n", .{msg.event});
+                allocator.free(ev.capabilities);
             },
             .unknown => |ev| {
                 print("received: {f}\n", .{msg.event});

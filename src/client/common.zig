@@ -6,6 +6,7 @@ const WlShm = @import("WlShm.zig");
 const XdgWmBase = @import("XdgWmBase.zig");
 const WlSurface = @import("WlSurface.zig");
 const XdgSurface = @import("XdgSurface.zig");
+const XdgToplevel = @import("XdgToplevel.zig");
 
 pub const Interfaces = enum(u16) {
     _padding,
@@ -17,6 +18,7 @@ pub const Interfaces = enum(u16) {
     XdgWmBase,
     WlSurface,
     XdgSurface,
+    XdgToplevel,
 };
 
 pub const Header = extern struct {
@@ -42,18 +44,22 @@ pub const UnknownEvent = struct {
 
 pub const Event = union(enum) {
     unknown: UnknownEvent,
-    wl_display_error: WlDisplay.Error,
-    wl_delete_id: WlDisplay.DeleteId,
-    global: WlRegistry.Global,
-    global_remove: WlRegistry.GlobalRemove,
-    callback: WlCallback.Done,
-    wl_shm_format: WlShm.Format,
-    ping: XdgWmBase.Ping,
-    enter: WlSurface.Enter,
-    leave: WlSurface.Leave,
-    preferred_buffer_scale: WlSurface.PreferredBufferScale,
-    preferred_buffer_transform: WlSurface.PreferredBufferTransform,
-    configure: XdgSurface.Configure,
+    wl_display_error: WlDisplay.ErrorEvent,
+    wl_display_delete_id: WlDisplay.DeleteIdEvent,
+    wl_registry_global: WlRegistry.GlobalEvent,
+    wl_registry_global_remove: WlRegistry.GlobalRemoveEvent,
+    wl_callback_done: WlCallback.DoneEvent,
+    wl_shm_format: WlShm.FormatEvent,
+    xdg_wm_base_ping: XdgWmBase.PingEvent,
+    wl_surface_enter: WlSurface.EnterEvent,
+    wl_surface_leave: WlSurface.LeaveEvent,
+    wl_surface_preferred_buffer_scale: WlSurface.PreferredBufferScaleEvent,
+    wl_surface_preferred_buffer_transform: WlSurface.PreferredBufferTransformEvent,
+    xdg_surface_configure: XdgSurface.ConfigureEvent,
+    xdg_toplevel_configure: XdgToplevel.ConfigureEvent,
+    xdg_toplevel_close: XdgToplevel.CloseEvent,
+    xdg_toplevel_configure_bounds: XdgToplevel.ConfigureBoundsEvent,
+    xdg_toplevel_wm_capabilities: XdgToplevel.WmCapabilitiesEvent,
 
     pub fn format(self: *const Event, writer: *std.Io.Writer) !void {
         try writer.flush();

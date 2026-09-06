@@ -14,6 +14,7 @@ wl_shm: ?client.WlShm = null,
 xdg_wm_base: ?client.XdgWmBase = null,
 wl_surface: ?client.WlSurface = null,
 xdg_surface: ?client.XdgSurface = null,
+xdg_toplevel: ?client.XdgToplevel = null,
 
 const Self = @This();
 
@@ -91,6 +92,16 @@ pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common
             const event: client.XdgSurface.Events = @enumFromInt(header.opcode);
             break :blk switch (event) {
                 .Configure => client.XdgSurface.handleConfigure(ev),
+                else => try common.handleUnknownEvent(allocator, ev),
+            };
+        },
+        .XdgToplevel => blk: {
+            const event: client.XdgToplevel.Events = @enumFromInt(header.opcode);
+            break :blk switch (event) {
+                .Configure => try client.XdgToplevel.handleConfigure(allocator, ev),
+                .Close => client.XdgToplevel.handleClose(),
+                .ConfigureBounds => client.XdgToplevel.handleConfigureBounds(ev),
+                .WmCapabilities => try client.XdgToplevel.handleWmCapabilities(allocator, ev),
                 else => try common.handleUnknownEvent(allocator, ev),
             };
         },

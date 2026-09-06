@@ -87,17 +87,16 @@ pub fn ackConfigure(self: *const Self, conn: *const Connection, args: AckConfigu
     try conn.writer.flush();
 }
 
-pub const Configure = struct {
+pub const ConfigureEvent = struct {
     serial: u32,
 
-    pub fn format(self: *const Configure, writer: *std.Io.Writer) !void {
+    pub fn format(self: *const ConfigureEvent, writer: *std.Io.Writer) !void {
         try writer.print("xdg_surface_configure_event: {{ serial: {d} }}", .{self.serial});
     }
 };
 pub fn handleConfigure(ev: []u8) common.Event {
-    std.debug.print("xdg surface configure event received", .{});
     return common.Event{
-        .configure = Configure{
+        .xdg_surface_configure = ConfigureEvent{
             .serial = std.mem.readInt(u32, ev[0..@sizeOf(u32)], .little),
         },
     };
