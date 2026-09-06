@@ -36,12 +36,7 @@ pub fn main(init: std.process.Init) !void {
         .id = try conn.allocateId(allocator, Interfaces.WlDisplay),
     };
 
-    try conn.wl_display.?.getRegistry(
-        &conn,
-        .{
-            .new_id = try conn.allocateId(allocator, Interfaces.WlRegistry),
-        },
-    );
+    try setupRegistry(allocator, &conn);
 
     while (true) {
         const msg = try conn.nextEvent(allocator);
@@ -62,6 +57,45 @@ pub fn main(init: std.process.Init) !void {
             .unknown => |ev| {
                 std.debug.print("received: {f}\n", .{msg.event});
                 allocator.free(ev.data);
+            },
+        }
+    }
+}
+
+pub fn setupRegistry(allocator: std.mem.Allocator, conn: *Connection) !void {
+    conn.wl_registry = client.WlRegistry{
+        .id = try conn.wl_display.?.getRegistry(
+            conn,
+            .{
+                .new_id = try conn.allocateId(allocator, Interfaces.WlRegistry),
+            },
+        ),
+    };
+
+    while (true) {
+        const header = try conn.reader.peekStructPointer(client.common.Header);
+        const interface: Interfaces = conn.objects.items[header.id];
+        switch (interface) {
+            .WlRegistry => {
+                const msg = try conn.nextEvent(allocator);
+                switch (msg.event) {
+                    .global => {
+                        std.debug.print("received: {f}\n", .{msg.event});
+                    },
+                    .global_remove => {
+                        std.debug.print("received: {f}\n", .{msg.event});
+                    },
+                    .unknown => |ev| {
+                        std.debug.print("received: {f}\n", .{msg.event});
+                        allocator.free(ev.data);
+                    },
+                    else => {
+                        break;
+                    },
+                }
+            },
+            else => {
+                break;
             },
         }
     }

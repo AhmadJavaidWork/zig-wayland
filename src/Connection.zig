@@ -8,6 +8,7 @@ reader: *Io.Reader,
 writer: *Io.Writer,
 objects: std.ArrayList(client.common.Interfaces) = .empty,
 wl_display: ?client.WlDisplay = null,
+wl_registry: ?client.WlRegistry = null,
 
 const Self = @This();
 
@@ -17,6 +18,8 @@ pub fn init(self: *Self, allocator: std.mem.Allocator) !void {
 
 pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
     self.objects.deinit(allocator);
+    self.wl_display = null;
+    self.wl_registry = null;
 }
 
 pub fn allocateId(self: *Self, allocator: std.mem.Allocator, interface: common.Interfaces) !u32 {
@@ -24,7 +27,7 @@ pub fn allocateId(self: *Self, allocator: std.mem.Allocator, interface: common.I
     return @intCast(self.objects.items.len - 1);
 }
 
-pub fn nextEvent(self: *Self, allocator: std.mem.Allocator) !client.common.Message {
+pub fn nextEvent(self: *const Self, allocator: std.mem.Allocator) !client.common.Message {
     const header = try self.reader.takeStructPointer(common.Header);
     const ev = try self.reader.take(header.length - @sizeOf(common.Header));
     const interface: common.Interfaces = self.objects.items[header.id];
